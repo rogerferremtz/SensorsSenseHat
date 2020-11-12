@@ -3,7 +3,7 @@
  * Program @file RTIMULibDrive10.cpp
  * Version   1.3
  *
- * @brief Programa de posicionament i resposta luminica a canvi de posició del dispositiu
+ * @brief Programa de posicionament del dispositiu
  *
  * @author Roger Ferré Martínez
  * @author Xorxe Oural Martínez
@@ -46,7 +46,6 @@ int cridarsql(float eje_x, float eje_y, float eje_z, int id_X, int id_Y, int id_
 
 static int callback_X(void *punter, int argc, char **argv, char **azColName)
 {
-	printf("\nI'm in callback_X\n");
 	int i, id = -1;
 
 	for (i = 0; i < argc; i++) {
@@ -63,7 +62,6 @@ static int callback_X(void *punter, int argc, char **argv, char **azColName)
 
 static int callback_Y(void *punter, int argc, char **argv, char **azColName)
 {
-	printf("\nI'm in callback_Y\n");
 	int i, id = -1;
 
 	for (i = 0; i < argc; i++) {
@@ -80,7 +78,6 @@ static int callback_Y(void *punter, int argc, char **argv, char **azColName)
 
 static int callback_Z(void *punter, int argc, char **argv, char **azColName)
 {
-	printf("\nI'm in callback_Z\n");
 	int i, id = -1;
 
 	for (i = 0; i < argc; i++) {
@@ -152,7 +149,7 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 
 	sprintf(sql_insertar_Y, "INSERT INTO mesures (id_sensor, valor) VALUES (%d, %f);", id_Y, eje_Y);
 
-	printf("SQLITE3: %s\n\n", sql_insertar_Y);
+	printf("SQLITE3: %s\n", sql_insertar_Y);
 
 	rc = sqlite3_exec(db, sql_insertar_Y, 0, 0, &zErrMsg);
 
@@ -162,8 +159,7 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 		sqlite3_close(db);
 		return 1;
 	}
-		sqlite3_close(db);
-		return 0;
+
 		
 		
 	char sql_insertar_Z[1024];
