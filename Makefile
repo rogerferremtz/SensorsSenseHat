@@ -1,6 +1,5 @@
-LDFLAGS += -lRTIMULib
-
-RTIMULibDrive10 : RTIMULibDrive10.cpp
+all: orientacio.cpp
+	g++ -lRTIMULib -lsqlite3 orientacio.cpp   -o orientacio
 
 clean:
-	rm RTIMULibDrive10
+	rm orientacio
