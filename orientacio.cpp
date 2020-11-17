@@ -23,7 +23,16 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/.
  *
  */
+/*
+Makefile:
 
+all: orientacio.cpp
+	g++ -lRTIMULib -lsqlite3 orientacio.cpp   -o orientacio
+
+clear:
+	rm orientacio
+
+ */
 #include "RTIMULib.h"
 #include "RTFusionRTQF.h"
 #include "RTIMUSettings.h"
@@ -32,18 +41,23 @@
 #include "unistd.h"
 #include "stdio.h"
 #include "stdlib.h"
-//#include "getopt.h"
-//#include "fcntl.h"
-//#include "sys/ioctl.h"
-//#include "linux/types.h"
-//#include "linux/spi/spidev.h"
-//#include "string.h"
 
+
+//Prototipus de les funcions.
 int sensor(int, int, int);
 int cridarsql(float eje_x, float eje_y, float eje_z, int id_X, int id_Y, int id_Z);
 
+// -----------------------------------------------------------------------------------------------
+
+/*
+ * Aquest codi serveix per mesurar i enregistrar els valors de l'orientació de la placa SenseHat.
+ * L'orientació, en estar mesurada en els tres eixos, tindrem en compte 3 sensors, en l'eix X,
+ * en l'eix Y i en l'eix Z.
+ */
 
 
+
+//Aquest Callback revisa que el sensor d'orientació en l'eix X estigui registrat.
 static int callback_X(void *punter, int argc, char **argv, char **azColName)
 {
 	int i, id = -1;
@@ -60,6 +74,9 @@ static int callback_X(void *punter, int argc, char **argv, char **azColName)
 	return 0;
 }
 
+
+
+//Aquest Callback revisa que el sensor d'orientació en l'eix Y estigui registrat.
 static int callback_Y(void *punter, int argc, char **argv, char **azColName)
 {
 	int i, id = -1;
@@ -76,6 +93,9 @@ static int callback_Y(void *punter, int argc, char **argv, char **azColName)
 	return 0;
 }
 
+
+
+//Aquest Callback revisa que el sensor d'orientació en l'eix Z estigui registrat.
 static int callback_Z(void *punter, int argc, char **argv, char **azColName)
 {
 	int i, id = -1;
@@ -92,6 +112,9 @@ static int callback_Z(void *punter, int argc, char **argv, char **azColName)
 	return 0;
 }
 
+
+
+//Aquest Callback ens retorna el valor del ID del sensor que li haguem demanat.
 static int callback_id(void *punter, int argc, char **argv, char **azColName)
 {
 	int i, id = -1;
@@ -110,6 +133,9 @@ static int callback_id(void *punter, int argc, char **argv, char **azColName)
 // -----------------------------------------------------------------------------------------------
 
 
+
+//Funció encarregada d'introduïr els valors dels sensors a la base de dades. Per fer-ho, abans 
+//cal saber els valors que entrem a la base de dades i els valors dels ID de cada sensor.
 int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_Z)
 {
     sqlite3 *db;
@@ -122,7 +148,6 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 		  fprintf(stderr, "Cannot open database.\n");
 		  return 1;
 	}
-
 
 
 
@@ -161,6 +186,8 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 	}
 
 
+
+
 	char sql_insertar_Z[1024];
 
 	sprintf(sql_insertar_Z, "INSERT INTO mesures (id_sensor, valor) VALUES (%d, %f);", id_Z, eje_Z);
@@ -180,9 +207,8 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 }
 
 
-// -----------------------------------------------------------------------------------------------
 
-
+//Funció que llegeix el valor de l'orientació en els tres eixos i crida a la funció que els entrarà a la base de dades.
 int sensor(int id_X, int id_Y, int id_Z)
 {
     int sampleCount = 0;
@@ -230,13 +256,13 @@ int sensor(int id_X, int id_Y, int id_Z)
 			RTVector3& vec = imuData.fusionPose;
 			// Treiem per pantalla la inclinació a cada segon.
 
-			float eje_x = vec.x() * RTMATH_RAD_TO_DEGREE;
-			float eje_y = vec.y() * RTMATH_RAD_TO_DEGREE;
-			float eje_z = vec.z() * RTMATH_RAD_TO_DEGREE;
+			float eje_x = vec.x() * RTMATH_RAD_TO_DEGREE;	//Obtenim valor en l'eix X.
+			float eje_y = vec.y() * RTMATH_RAD_TO_DEGREE;	//Obtenim valor en l'eix Y.
+			float eje_z = vec.z() * RTMATH_RAD_TO_DEGREE;	//Obtenim valor en l'eix Z.
 
 			printf("Inclinació en els eixos. X:%f, Y:%f, Z:%f\n", eje_x, eje_y, eje_z);
 
-			cridarsql(eje_x, eje_y, eje_z, id_X, id_Y, id_Z);
+			cridarsql(eje_x, eje_y, eje_z, id_X, id_Y, id_Z);	//Cridem la funció que els entra a la base de dades.
 
 			sleep(1);
 
@@ -245,9 +271,14 @@ int sensor(int id_X, int id_Y, int id_Z)
 }
 
 
+
 // -----------------------------------------------------------------------------------------------
 
 
+
+//Funció main, la primera part d'aquesta s'encarrega de revisar que els sensors estiguin registrats a la
+//base de dades, en cas que no ho siguin, els registra. Un cop registrats demana el seu ID. La segona part
+//crida la funció que llegeix els valors de la SenseHat.
 int main()
 {
 	int ret = 0, value_int;
