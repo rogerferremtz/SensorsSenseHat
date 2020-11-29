@@ -1,5 +1,6 @@
-all: orientacio.cpp
-	g++ -lRTIMULib -lsqlite3 orientacio.cpp   -o orientacio
+all:
+	g++ -lRTIMULib -lsqlite3 -lrt -lpthread orientacio.cpp   -o orientacio
 
 clean:
 	rm orientacio
+
