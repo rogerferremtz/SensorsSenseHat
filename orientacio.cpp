@@ -41,11 +41,15 @@ clear:
 #include "unistd.h"
 #include "stdio.h"
 #include "stdlib.h"
+#include "pthread.h"
+#include "signal.h"
+#include "sys/time.h"
 
 
 //Prototipus de les funcions.
 int sensor(int, int, int);
 int cridarsql(float eje_x, float eje_y, float eje_z, int id_X, int id_Y, int id_Z);
+typedef void (timer_callback) (union sigval);
 
 // -----------------------------------------------------------------------------------------------
 
@@ -54,6 +58,20 @@ int cridarsql(float eje_x, float eje_y, float eje_z, int id_X, int id_Y, int id_
  * L'orientació, en estar mesurada en els tres eixos, tindrem en compte 3 sensors, en l'eix X,
  * en l'eix Y i en l'eix Z.
  */
+
+void callback(union sigval si)
+{
+	int * msg = (int *) si.sival_ptr;
+	int id_X = msg[0];
+	int id_Y = msg[1];
+	int id_Z = msg[2];
+
+	//printf("\n\nID: X = %d, Y = %d, Z = %d\n\n", id_X, id_Y, id_Z);
+
+	sensor(id_X, id_Y, id_Z);
+    
+    //printf("%s\n",msg);
+}
 
 
 
@@ -121,11 +139,35 @@ static int callback_id(void *punter, int argc, char **argv, char **azColName)
 	int *punterint = (int *)punter;
 
 	for (i = 0; i < argc; i++) {
-		printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+		//printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
 		id = atoi(argv[i]);
 	}
 	*punterint = id;
 	return 0;
+}
+
+
+
+int set_timer(timer_t * timer_id, float delay, float interval, timer_callback * func, int * data) 
+{
+    int status =0;
+    struct itimerspec ts;
+    struct sigevent se;
+
+    se.sigev_notify = SIGEV_THREAD;
+    se.sigev_value.sival_ptr = data;
+    se.sigev_notify_function = func;
+    se.sigev_notify_attributes = NULL;
+
+    status = timer_create(CLOCK_REALTIME, &se, timer_id);
+
+    ts.it_value.tv_sec = abs(delay);
+    ts.it_value.tv_nsec = (delay-abs(delay)) * 1e09;
+    ts.it_interval.tv_sec = abs(interval);
+    ts.it_interval.tv_nsec = (interval-abs(interval)) * 1e09;
+
+    status = timer_settime(*timer_id, 0, &ts, 0);
+    return 0;
 }
 
 
@@ -235,39 +277,30 @@ int sensor(int id_X, int id_Y, int id_Z)
 
     imu->IMUInit();
 
-	// Espai de configuració dels paràmetres
 
-
-    imu->setSlerpPower(0.02);
     imu->setGyroEnable(true);
-    //imu->setAccelEnable(true);
-    //imu->setCompassEnable(true);
+
 
 
 	// Bucle de processament de les dades
 
 
-    while (1) {
 
-        usleep(imu->IMUGetPollInterval() * 1000);
+	usleep(imu->IMUGetPollInterval() * 1000);
 
-        while (imu->IMURead()) {
-			RTIMU_DATA imuData = imu->getIMUData();
-			RTVector3& vec = imuData.fusionPose;
-			// Treiem per pantalla la inclinació a cada segon.
+	if (imu->IMURead()) {
+		RTIMU_DATA imuData = imu->getIMUData();
+		RTVector3& vec = imuData.fusionPose;
+		// Treiem per pantalla la inclinació a cada segon.
 
-			float eje_x = vec.x() * RTMATH_RAD_TO_DEGREE;	//Obtenim valor en l'eix X.
-			float eje_y = vec.y() * RTMATH_RAD_TO_DEGREE;	//Obtenim valor en l'eix Y.
-			float eje_z = vec.z() * RTMATH_RAD_TO_DEGREE;	//Obtenim valor en l'eix Z.
+		float eje_x = vec.x() * RTMATH_RAD_TO_DEGREE;	//Obtenim valor en l'eix X.
+		float eje_y = vec.y() * RTMATH_RAD_TO_DEGREE;	//Obtenim valor en l'eix Y.
+		float eje_z = vec.z() * RTMATH_RAD_TO_DEGREE;	//Obtenim valor en l'eix Z.
 
-			printf("Inclinació en els eixos. X:%f, Y:%f, Z:%f\n", eje_x, eje_y, eje_z);
+		printf("Inclinació en els eixos. X:%f, Y:%f, Z:%f\n", eje_x, eje_y, eje_z);
 
-			cridarsql(eje_x, eje_y, eje_z, id_X, id_Y, id_Z);	//Cridem la funció que els entra a la base de dades.
-
-			sleep(1);
-
-        }
-    }
+		cridarsql(eje_x, eje_y, eje_z, id_X, id_Y, id_Z);	//Cridem la funció que els entra a la base de dades.
+	}
 }
 
 
@@ -344,7 +377,19 @@ int main()
 		rc = sqlite3_exec(db, demanar_id_Z, callback_id, &id_Z, &zErrMsg);
 		printf("Id_Z es: %d\n\n", id_Z);
 
-	sensor(id_X, id_Y, id_Z);
+
+
+	int ids[3];
+	int *pointer = ids;
+	ids[0] = id_X;
+	ids[1] = id_Y;
+	ids[2] = id_Z;
+
+
+	timer_t tick;
+	set_timer(&tick, 2, 5, callback, (int *) pointer);
+	getchar();
+
 
 	return ret;
 }
