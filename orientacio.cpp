@@ -45,6 +45,8 @@ clear:
 #include "signal.h"
 #include "sys/time.h"
 
+#include "func.h"
+
 
 //Prototipus de les funcions.
 int sensor(int, int, int);
@@ -180,16 +182,56 @@ int set_timer(timer_t * timer_id, float delay, float interval, timer_callback * 
 //cal saber els valors que entrem a la base de dades i els valors dels ID de cada sensor.
 int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_Z)
 {
-    sqlite3 *db;
+
+
+	sqlite3 *db;
     char *zErrMsg = 0;
     int rc;
 
-	rc = sqlite3_open("basedades_adstr.db", &db);
+	rc = sqlite3_open("/home/pi/Desktop/GIT/SensorsSenseHat/basedades_adstr.db", &db);
 
 	if (rc != SQLITE_OK) {
 		  fprintf(stderr, "Cannot open database.\n");
 		  return 1;
 	}
+
+
+
+	char cadena_URI[1024];
+	//char nom_servidor[32] = "84.88.55.9";
+	char nom_servidor[32] = "iotlab.euss.cat";
+
+	int hores, minuts, segons, dia, mes, any;
+
+	time_t ara;
+
+	//Obte l'hora actual
+
+	time(&ara);
+
+	struct tm *local = localtime(&ara);
+
+	hores = local->tm_hour;
+	minuts = local->tm_min;
+	segons = local->tm_sec;
+
+	dia = local->tm_mday;
+	mes = local->tm_mon + 1;
+	any = local->tm_year + 1900;
+
+
+	if (hores < 12) //Ante Meridiem.
+		printf("Ara son les : %02d:%02d:%02d am\n", hores, minuts, segons);
+
+	else  //Post Meridiem.
+		printf("Ara son les : %02d:%02d:%02d pm\n", hores - 12, minuts, segons);
+
+	//Mostra la data.
+	//printf("Avui estem a : %02d/%02d/%d\n", dia, mes, any);
+
+
+
+
 
 
 
@@ -202,12 +244,30 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 
 	rc = sqlite3_exec(db, sql_insertar_X, 0, 0, &zErrMsg);
 
+
+
+
+
+	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=1&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", eje_X * 1000, any, mes, dia, hores, minuts, segons);
+
+	http_get(nom_servidor, cadena_URI);
+
+
+
+
+
+
 	if (rc != SQLITE_OK) {
 		fprintf(stderr, "SQL error: %s\n", zErrMsg);
 		sqlite3_free(zErrMsg);
 		sqlite3_close(db);
 		return 1;
 	}
+
+
+
+
+
 
 
 
@@ -320,7 +380,7 @@ int main()
 	int rc;
 	int id_X, id_Y, id_Z;
 
-	rc = sqlite3_open("basedades_adstr.db", &db);
+	rc = sqlite3_open("/home/pi/Desktop/GIT/SensorsSenseHat/basedades_adstr.db", &db);
 
 	if (rc != SQLITE_OK) {
 		  fprintf(stderr, "Cannot open database.\n");
