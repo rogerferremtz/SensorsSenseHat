@@ -71,7 +71,7 @@ void callback(union sigval si)
 	//printf("\n\nID: X = %d, Y = %d, Z = %d\n\n", id_X, id_Y, id_Z);
 
 	sensor(id_X, id_Y, id_Z);
-    
+
     //printf("%s\n",msg);
 }
 
@@ -150,7 +150,7 @@ static int callback_id(void *punter, int argc, char **argv, char **azColName)
 
 
 
-int set_timer(timer_t * timer_id, float delay, float interval, timer_callback * func, int * data) 
+int set_timer(timer_t * timer_id, float delay, float interval, timer_callback * func, int * data)
 {
     int status =0;
     struct itimerspec ts;
@@ -178,7 +178,7 @@ int set_timer(timer_t * timer_id, float delay, float interval, timer_callback * 
 
 
 
-//Funció encarregada d'introduïr els valors dels sensors a la base de dades. Per fer-ho, abans 
+//Funció encarregada d'introduïr els valors dels sensors a la base de dades. Per fer-ho, abans
 //cal saber els valors que entrem a la base de dades i els valors dels ID de cada sensor.
 int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_Z)
 {
