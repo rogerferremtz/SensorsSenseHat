@@ -23,16 +23,6 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/.
  *
  */
-/*
-Makefile:
-
-all: orientacio.cpp
-	g++ -lRTIMULib -lsqlite3 orientacio.cpp   -o orientacio
-
-clear:
-	rm orientacio
-
- */
 #include "RTIMULib.h"
 #include "RTFusionRTQF.h"
 #include "RTIMUSettings.h"
@@ -248,7 +238,7 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 
 
 
-	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=1&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", eje_X * 1000, any, mes, dia, hores, minuts, segons);
+	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=61&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", eje_X * 1000, any, mes, dia, hores, minuts, segons);
 
 	http_get(nom_servidor, cadena_URI);
 
@@ -290,7 +280,7 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 
 
 
-	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=1&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", eje_Y * 1000, any, mes, dia, hores, minuts, segons);
+	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=62&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", eje_Y * 1000, any, mes, dia, hores, minuts, segons);
 
 	http_get(nom_servidor, cadena_URI);
 
@@ -317,7 +307,7 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 
 
 
-	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=1&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", eje_Z * 1000, any, mes, dia, hores, minuts, segons);
+	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=63&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", eje_Z * 1000, any, mes, dia, hores, minuts, segons);
 
 	http_get(nom_servidor, cadena_URI);
 
