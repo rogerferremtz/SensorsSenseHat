@@ -290,6 +290,15 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 
 
 
+	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=1&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", eje_Y * 1000, any, mes, dia, hores, minuts, segons);
+
+	http_get(nom_servidor, cadena_URI);
+
+
+
+
+
+
 	char sql_insertar_Z[1024];
 
 	sprintf(sql_insertar_Z, "INSERT INTO mesures (id_sensor, valor) VALUES (%d, %f);", id_Z, eje_Z);
@@ -304,6 +313,16 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 		sqlite3_close(db);
 		return 1;
 	}
+
+
+
+
+	sprintf(cadena_URI, "/cloud/guardar_dades.php?id_sensor=1&valor=%f&temps=%02d-%02d-%02d+%02d%%3A%02d%%3A%02d", eje_Z * 1000, any, mes, dia, hores, minuts, segons);
+
+	http_get(nom_servidor, cadena_URI);
+
+
+
 		sqlite3_close(db);
 		return 0;
 }
