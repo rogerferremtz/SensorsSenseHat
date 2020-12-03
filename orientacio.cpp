@@ -23,6 +23,7 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/.
  *
  */
+
 #include "RTIMULib.h"
 #include "RTFusionRTQF.h"
 #include "RTIMUSettings.h"
@@ -34,6 +35,10 @@
 #include "pthread.h"
 #include "signal.h"
 #include "sys/time.h"
+#include "sys/types.h"
+#include "sys/socket.h"
+#include "string.h"
+#include "getopt.h"
 
 #include "func.h"
 
@@ -43,6 +48,10 @@ int sensor(int, int, int);
 int cridarsql(float eje_x, float eje_y, float eje_z, int id_X, int id_Y, int id_Z);
 typedef void (timer_callback) (union sigval);
 
+
+char nom_servidor[32];
+char directori_basedades[32];
+
 // -----------------------------------------------------------------------------------------------
 
 /*
@@ -50,6 +59,12 @@ typedef void (timer_callback) (union sigval);
  * L'orientació, en estar mesurada en els tres eixos, tindrem en compte 3 sensors, en l'eix X,
  * en l'eix Y i en l'eix Z.
  */
+
+void error(void)
+{
+	printf("No s'han entès les comandes.\n");
+}
+
 
 void callback(union sigval si)
 {
@@ -178,7 +193,8 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
     char *zErrMsg = 0;
     int rc;
 
-	rc = sqlite3_open("/home/pi/Desktop/GIT/SensorsSenseHat/basedades_adstr.db", &db);
+	//rc = sqlite3_open("/home/pi/Desktop/GIT/SensorsSenseHat/basedades_adstr.db", &db);
+	rc = sqlite3_open(directori_basedades, &db);
 
 	if (rc != SQLITE_OK) {
 		  fprintf(stderr, "Cannot open database.\n");
@@ -189,7 +205,7 @@ int cridarsql(float eje_X, float eje_Y, float eje_Z, int id_X, int id_Y, int id_
 
 	char cadena_URI[1024];
 	//char nom_servidor[32] = "84.88.55.9";
-	char nom_servidor[32] = "iotlab.euss.cat";
+	//char nom_servidor[32] = "iotlab.euss.cat";
 
 	int hores, minuts, segons, dia, mes, any;
 
@@ -381,15 +397,45 @@ int sensor(int id_X, int id_Y, int id_Z)
 //Funció main, la primera part d'aquesta s'encarrega de revisar que els sensors estiguin registrats a la
 //base de dades, en cas que no ho siguin, els registra. Un cop registrats demana el seu ID. La segona part
 //crida la funció que llegeix els valors de la SenseHat.
-int main()
+int main(int argc, char *argv[])
 {
+
+	int opt = 0;
+
+	static struct option long_options[] = {
+		{"directori", required_argument, 0, 'd'},
+		{"servidor", required_argument, 0, 's'},
+		{0, 0, 0, 0}
+	};
+
+	int long_index = 0;
+	
+
+	while ((opt = getopt_long(argc, argv, "d:s:", long_options, &long_index)) != -1) {
+		switch (opt) {
+		case 'd':
+			strcpy(directori_basedades, optarg);
+			break;
+		case 's':
+			strcpy(nom_servidor, optarg);
+			break;
+		default:
+			error();
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	printf("Directori: %s, Servidor: %s.\n", directori_basedades, nom_servidor);
+
+
 	int ret = 0, value_int;
 	sqlite3 *db;
 	char *zErrMsg = 0;
 	int rc;
 	int id_X, id_Y, id_Z;
 
-	rc = sqlite3_open("/home/pi/Desktop/GIT/SensorsSenseHat/basedades_adstr.db", &db);
+	//rc = sqlite3_open("/home/pi/Desktop/GIT/SensorsSenseHat/basedades_adstr.db", &db);
+	rc = sqlite3_open(directori_basedades, &db);
 
 	if (rc != SQLITE_OK) {
 		  fprintf(stderr, "Cannot open database.\n");
